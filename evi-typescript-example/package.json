@@ -9,11 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "hume": "^0.7.0"
+    "hume": "^0.7.0",
+    "three": "^0.130.1"
   },
   "devDependencies": {
     "typescript": "^5.2.2",
-    "vite": "^5.1.4"
+    "vite": "^5.1.4",
+    "@types/three": "^0.127.1"
   },
   "engines": {
     "node": ">=18"

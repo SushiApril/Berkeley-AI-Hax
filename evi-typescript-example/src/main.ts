@@ -86,6 +86,7 @@ import './styles.css';
     // instantiates WebSocket and establishes an authenticated connection
     socket = await client.empathicVoice.chat.connect({
       // configId: '<YOUR_CONFIG_ID>',
+      configId: '91a1d6f2-cf02-4817-b0d2-76f0ed223f8b',
       resumedChatGroupId: chatGroupId,
       onOpen: handleWebSocketOpenEvent,
       onMessage: handleWebSocketMessageEvent,
@@ -148,7 +149,7 @@ import './styles.css';
       const audioInput: Omit<Hume.empathicVoice.AudioInput, 'type'> = {
         data: encodedAudioData,
       };
-
+      //console.log("User Audio Input: ",audioInput);
       // send audio_input message
       socket?.sendAudioInput(audioInput);
     };
@@ -242,6 +243,9 @@ import './styles.css';
       case 'user_message':
       case 'assistant_message':
         const { role, content } = message.message;
+        
+        console.log(`${role} Message:`, content);
+
         const topThreeEmotions = extractTopThreeEmotions(message);
         appendMessage(role, content ?? '', topThreeEmotions);
         break;
@@ -250,6 +254,7 @@ import './styles.css';
       case 'audio_output':
         // convert base64 encoded audio to a Blob
         const audioOutput = message.data;
+        //console.log(audioOutput);
         const blob = convertBase64ToBlob(audioOutput, mimeType);
 
         // add audio Blob to audioQueue
@@ -407,3 +412,277 @@ class ChatCard {
     return card;
   }
 }
+
+
+
+// import {
+//   Hume,
+//   HumeClient,
+//   convertBlobToBase64,
+//   convertBase64ToBlob,
+//   ensureSingleValidAudioTrack,
+//   getAudioStream,
+//   getBrowserSupportedMimeType,
+//   MimeType,
+// } from 'hume';
+// import './styles.css';
+// import * as THREE from 'three';
+// import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+
+// (async () => {
+//   const startBtn = document.querySelector<HTMLButtonElement>('button#start-btn');
+//   const stopBtn = document.querySelector<HTMLButtonElement>('button#stop-btn');
+//   const chat = document.querySelector<HTMLDivElement>('div#chat');
+
+//   startBtn?.addEventListener('click', connect);
+//   stopBtn?.addEventListener('click', disconnect);
+
+//   let client: HumeClient | null = null;
+//   let socket: Hume.empathicVoice.StreamSocket | null = null;
+//   let connected = false;
+//   let chatGroupId: string | undefined;
+//   let recorder: MediaRecorder | null = null;
+//   let audioStream: MediaStream | null = null;
+//   let currentAudio: HTMLAudioElement | null = null;
+//   let isPlaying = false;
+//   const audioQueue: Blob[] = [];
+
+//   const mimeType: MimeType = (() => {
+//     const result = getBrowserSupportedMimeType();
+//     return result.success ? result.mimeType : MimeType.WEBM;
+//   })();
+
+//   async function connect(): Promise<void> {
+//     if (!client) {
+//       client = new HumeClient({
+//         apiKey: import.meta.env.VITE_HUME_API_KEY || '',
+//         secretKey: import.meta.env.VITE_HUME_SECRET_KEY || '',
+//       });
+//     }
+
+//     socket = await client.empathicVoice.chat.connect({
+//       configId: '91a1d6f2-cf02-4817-b0d2-76f0ed223f8b',
+//       resumedChatGroupId: chatGroupId,
+//       onOpen: handleWebSocketOpenEvent,
+//       onMessage: handleWebSocketMessageEvent,
+//       onError: handleWebSocketErrorEvent,
+//       onClose: handleWebSocketCloseEvent,
+//     });
+
+//     toggleBtnStates();
+//   }
+
+//   function disconnect(): void {
+//     toggleBtnStates();
+//     stopAudio();
+//     recorder?.stop();
+//     recorder = null;
+//     audioStream = null;
+//     connected = false;
+//     chatGroupId = undefined;
+//     socket?.close();
+//   }
+
+//   async function captureAudio(): Promise<void> {
+//     audioStream = await getAudioStream();
+//     ensureSingleValidAudioTrack(audioStream);
+//     recorder = new MediaRecorder(audioStream, { mimeType });
+
+//     recorder.ondataavailable = async ({ data }) => {
+//       if (data.size < 1) return;
+//       const encodedAudioData = await convertBlobToBase64(data);
+//       const audioInput: Omit<Hume.empathicVoice.AudioInput, 'type'> = { data: encodedAudioData };
+//       console.log("User Audio Input: ", audioInput);
+//       socket?.sendAudioInput(audioInput);
+//     };
+
+//     recorder.start(100);
+//   }
+
+//   function playAudio(): void {
+//     if (!audioQueue.length || isPlaying) return;
+//     isPlaying = true;
+//     const audioBlob = audioQueue.shift();
+//     if (!audioBlob) return;
+//     const audioUrl = URL.createObjectURL(audioBlob);
+//     currentAudio = new Audio(audioUrl);
+//     currentAudio.play();
+//     currentAudio.onended = () => {
+//       isPlaying = false;
+//       if (audioQueue.length) playAudio();
+//     };
+//   }
+
+//   function stopAudio(): void {
+//     currentAudio?.pause();
+//     currentAudio = null;
+//     isPlaying = false;
+//     audioQueue.length = 0;
+//   }
+
+//   async function handleWebSocketOpenEvent(): Promise<void> {
+//     console.log('Web socket connection opened');
+//     connected = true;
+//     await captureAudio();
+//   }
+
+//   function handleWebSocketMessageEvent(message: Hume.empathicVoice.SubscribeEvent): void {
+//     switch (message.type) {
+//       case 'chat_metadata':
+//         chatGroupId = message.chatGroupId;
+//         break;
+//       case 'user_message':
+//       case 'assistant_message':
+//         const { role, content } = message.message;
+//         console.log(`${role} Message:`, content);
+//         if (role === 'assistant') {
+//           // Update the 3D model with the assistant's message
+//           displayAssistantMessage(content ?? '');
+//         }
+//         const topThreeEmotions = extractTopThreeEmotions(message);
+//         appendMessage(role, content ?? '', topThreeEmotions);
+//         break;
+//       case 'audio_output':
+//         const audioOutput = message.data;
+//         console.log(audioOutput);
+//         const blob = convertBase64ToBlob(audioOutput, mimeType);
+//         audioQueue.push(blob);
+//         if (audioQueue.length === 1) playAudio();
+//         break;
+//       case 'user_interruption':
+//         stopAudio();
+//         break;
+//     }
+//   }
+
+//   function handleWebSocketErrorEvent(error: Hume.empathicVoice.WebSocketError): void {
+//     console.error(error);
+//   }
+
+//   async function handleWebSocketCloseEvent(): Promise<void> {
+//     if (connected) {
+//       await connect();
+//     }
+//     console.log('Web socket connection closed');
+//   }
+
+//   function appendMessage(
+//     role: Hume.empathicVoice.Role,
+//     content: string,
+//     topThreeEmotions: { emotion: string; score: any }[]
+//   ): void {
+//     const chatCard = new ChatCard({
+//       role,
+//       timestamp: new Date().toLocaleTimeString(),
+//       content,
+//       scores: topThreeEmotions,
+//     });
+//     chat?.appendChild(chatCard.render());
+//   }
+
+//   function toggleBtnStates(): void {
+//     if (startBtn) startBtn.disabled = !startBtn.disabled;
+//     if (stopBtn) stopBtn.disabled = !stopBtn.disabled;
+//   }
+
+//   function extractTopThreeEmotions(
+//     message: Hume.empathicVoice.UserMessage | Hume.empathicVoice.AssistantMessage
+//   ): { emotion: string; score: string }[] {
+//     const scores = message.models.prosody?.scores;
+//     const scoresArray = Object.entries(scores || {});
+//     scoresArray.sort((a, b) => b[1] - a[1]);
+//     const topThreeEmotions = scoresArray.slice(0, 3).map(([emotion, score]) => ({
+//       emotion,
+//       score: (Math.round(Number(score) * 100) / 100).toFixed(2),
+//     }));
+//     return topThreeEmotions;
+//   }
+
+//   // Three.js setup for rendering the 3D model
+//   const scene = new THREE.Scene();
+//   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+//   const renderer = new THREE.WebGLRenderer();
+//   renderer.setSize(window.innerWidth, window.innerHeight);
+//   document.body.appendChild(renderer.domElement);
+
+//   const loader = new GLTFLoader();
+//   let model: THREE.Object3D;
+
+//   loader.load('path/to/your/3d-model.glb', (gltf) => {
+//     model = gltf.scene;
+//     scene.add(model);
+//     camera.position.z = 5;
+//     animate();
+//   });
+
+//   function animate() {
+//     requestAnimationFrame(animate);
+//     renderer.render(scene, camera);
+//   }
+
+//   function displayAssistantMessage(message: string) {
+//     if (model) {
+//       // Logic to animate or display message on the 3D model
+//       console.log("Assistant Message for 3D Model:", message);
+//     }
+//   }
+// })();
+
+// interface Score {
+//   emotion: string;
+//   score: string;
+// }
+
+// interface ChatMessage {
+//   role: Hume.empathicVoice.Role;
+//   timestamp: string;
+//   content: string;
+//   scores: Score[];
+// }
+
+// class ChatCard {
+//   private message: ChatMessage;
+
+//   constructor(message: ChatMessage) {
+//     this.message = message;
+//   }
+
+//   private createScoreItem(score: Score): HTMLElement {
+//     const scoreItem = document.createElement('div');
+//     scoreItem.className = 'score-item';
+//     scoreItem.innerHTML = `${score.emotion}: <strong>${score.score}</strong>`;
+//     return scoreItem;
+//   }
+
+//   public render(): HTMLElement {
+//     const card = document.createElement('div');
+//     card.className = `chat-card ${this.message.role}`;
+
+//     const role = document.createElement('div');
+//     role.className = 'role';
+//     role.textContent =
+//       this.message.role.charAt(0).toUpperCase() + this.message.role.slice(1);
+
+//     const timestamp = document.createElement('div');
+//     timestamp.className = 'timestamp';
+//     timestamp.innerHTML = `<strong>${this.message.timestamp}</strong>`;
+
+//     const content = document.createElement('div');
+//     content.className = 'content';
+//     content.textContent = this.message.content;
+
+//     const scores = document.createElement('div');
+//     scores.className = 'scores';
+//     this.message.scores.forEach((score) => {
+//       scores.appendChild(this.createScoreItem(score));
+//     });
+
+//     card.appendChild(role);
+//     card.appendChild(timestamp);
+//     card.appendChild(content);
+//     card.appendChild(scores);
+
+//     return card;
+//   }
+// }
+

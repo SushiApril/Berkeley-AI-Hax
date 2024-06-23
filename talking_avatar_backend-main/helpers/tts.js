@@ -13,6 +13,8 @@ let SSML = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml
 
 const key = process.env.AZURE_KEY;
 const region = process.env.AZURE_REGION;
+
+console.log(key, region)
         
 /**
  * Node.js server code to convert text to speech
@@ -24,12 +26,14 @@ const region = process.env.AZURE_REGION;
  */
 const textToSpeech = async (text, voice)=> {
     
+    
     // convert callback function to promise
     return new Promise((resolve, reject) => {
-        
+        w
 
         let ssml = SSML.replace("__TEXT__", text);
 
+        // console.log(ssml)
         
         const speechConfig = sdk.SpeechConfig.fromSubscription(key, region);
         speechConfig.speechSynthesisOutputFormat = 5; // mp3
@@ -47,6 +51,8 @@ const textToSpeech = async (text, voice)=> {
         let timeStamp = 0;
 
         const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig);
+
+        console.log(synthesizer)
 
         // Subscribes to viseme received event
         synthesizer.visemeReceived = function (s, e) {
@@ -85,5 +91,7 @@ const textToSpeech = async (text, voice)=> {
             }); 
     });
 };
+
+// console.log(textToSpeech)
 
 module.exports = textToSpeech;

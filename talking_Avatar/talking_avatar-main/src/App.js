@@ -370,13 +370,15 @@ function App() {
       
       </Suspense>
 
-  
+    
 
   </Canvas>
   <Loader dataInterpolation={(p) => `Loading... please wait`}  />
   </div>
   )
 }
+
+
 
 function Bg() {
   
